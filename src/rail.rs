@@ -88,8 +88,8 @@ fn panel(t: &Theme, notif_count: usize) -> Rectangle {
                 rail_btn("󰀻", t.palette.green, t, |_| crate::launcher::toggle()),
                 rail_btn(if notif_count > 0 { "󰅸" } else { "󰂚" }, if notif_count > 0 { t.palette.yellow } else { t.palette.blue }, t, |_| crate::notifications::toggle_center()),
                 rail_btn("󰄨", t.palette.green, t, |_| crate::monitor::toggle()),
-                rail_btn("󰸌", t.palette.purple, t, |_| theme::cycle()),
-                rail_btn(if t.id == "ember" { "E" } else { "C" }, t.palette.aqua, t, |_| theme::cycle()),
+                rail_btn("󰸌", t.palette.purple, t, |_| theme::cycle_theme()),
+                rail_btn(match t.id { "ember" => "E", "chroma" => "C", "mist" => "M", _ => "B" }, t.palette.aqua, t, |_| theme::cycle_variant()),
                 rail_btn("", t.palette.orange, t, |_| amane::spawn("waypaper")),
             ])
             .width(Parent).height(Parent).gap(10.0).align(Center).justify(Start),

@@ -13,7 +13,8 @@ It provides a Gruvbox-styled bar, launcher, control center, notification popups/
 - **Lock screen** - Amane/PAM lock screen with Gruvbox styling and theme-aware visuals.
 - **Left rail** - autohide hover rail for Launcher, Notifications, Monitor, Theme cycle, Variant, and Waypaper.
 - **Monitor window** - normal window with CPU, RAM, and filesystem usage.
-- **Themes/variants** - `Gruvbox Ember` (warm/rounded) and `Gruvbox Chroma` (sharp/colorful), switchable at runtime.
+- **Themes/variants** - Gruvbox: `Ember` (warm/rounded), `Chroma` (sharp/colorful). Everforest: `Mist` (minimal), `Bloom` (colorful). Switchable at runtime.
+- **Config/settings** - simple `~/.config/amane/config.conf`, `config`/`settings` IPC, and a basic settings window.
 
 ## Requirements
 
@@ -44,6 +45,23 @@ amane compile
 amane run
 ```
 
+## Config
+
+`~/.config/amane/config.conf` (simple key=value):
+
+```conf
+# Amane shell config
+theme = "chroma"
+notification_timeout_secs = 3
+bar_enabled = true
+rail_enabled = true
+notifications_enabled = true
+monitor_enabled = true
+lock_enabled = true
+```
+
+Module toggles apply on restart; theme/timeout can be applied live via IPC/settings.
+
 ## IPC
 
 ```sh
@@ -52,7 +70,9 @@ amane ipc call control-center toggle|open|close|status
 amane ipc call rail toggle|show|hide|status
 amane ipc call notifications toggle|open|close|clear|status
 amane ipc call monitor toggle|open|close
-amane ipc call theme current|list|cycle|ember|chroma
+amane ipc call theme current|list|cycle|ember|chroma|mist|bloom
+amane ipc call config get|reload|settings
+amane ipc call settings open|close
 amane ipc call lock
 ```
 

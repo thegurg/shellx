@@ -5,8 +5,9 @@ use amane::*;
 
 use crate::theme::{self, GRAIN_SHADER, Theme};
 
-const POPUP_SECS: u64 = 3;
 const MAX_POPUPS: usize = 3;
+
+fn popup_secs() -> u64 { crate::config::get().notification_timeout_secs.max(1) }
 
 pub struct NotifState {
     center_open: bool,
@@ -28,7 +29,7 @@ impl Service for NotifState {
             let id = n.id();
             if *self.dismissed_popups.get(&id).unwrap_or(&false) { continue; }
             let t = self.seen.entry(id).or_insert(now);
-            if now.duration_since(*t) < Duration::from_secs(POPUP_SECS) {
+            if now.duration_since(*t) < Duration::from_secs(popup_secs()) {
                 any_popup = true;
             }
         }
@@ -57,7 +58,7 @@ fn active_popups() -> Vec<Notification> {
         let id = n.id();
         if *s.dismissed_popups.get(&id).unwrap_or(&false) { continue; }
         let t = s.seen.entry(id).or_insert(now);
-        if now.duration_since(*t) >= Duration::from_secs(POPUP_SECS) { continue; }
+        if now.duration_since(*t) >= Duration::from_secs(popup_secs()) { continue; }
         out.push(n.clone());
         if out.len() >= MAX_POPUPS { break; }
     }

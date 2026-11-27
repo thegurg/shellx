@@ -141,13 +141,101 @@ pub const CHROMA: Theme = Theme {
     },
 };
 
+pub const EVERFOREST_MIST: Theme = Theme {
+    id: "mist",
+    name: "Everforest Mist",
+    palette: Palette {
+        bg_hard: "#2b3339",
+        bg0: "#323c41",
+        bg1: "#3a454a",
+        bg2: "#445055",
+        bg3: "#4f5b58",
+        fg: "#d3c6aa",
+        fg_dim: "#c5c0a0",
+        fg_muted: "#9da9a0",
+        red: "#e67e80",
+        green: "#a7c080",
+        yellow: "#dbbc7f",
+        blue: "#7fbbb3",
+        purple: "#d699b6",
+        aqua: "#83c092",
+        orange: "#e69875",
+        gray: "#859289",
+    },
+    style: Style {
+        bar_radius: 14.0,
+        module_radius: 11.0,
+        button_radius: 9.0,
+        bar_bg: "#2b3339",
+        bar_border: "#3a454a",
+        bar_border_width: 1.0,
+        module_bg: "#323c41",
+        module_border: "#445055",
+        module_border_width: 1.0,
+        grain_intensity: 0.045,
+        grain_scale: 1.2,
+        window_margin_top: 8,
+        window_margin_x: 10,
+        bar_height: 44.0,
+        module_height: 32.0,
+        font_size: 13.0,
+        bold: false,
+        colorful_modules: false,
+    },
+};
+
+pub const EVERFOREST_BLOOM: Theme = Theme {
+    id: "bloom",
+    name: "Everforest Bloom",
+    palette: Palette {
+        bg_hard: "#2b3339",
+        bg0: "#323c41",
+        bg1: "#3a454a",
+        bg2: "#4f585e",
+        bg3: "#56635f",
+        fg: "#d3c6aa",
+        fg_dim: "#c5c0a0",
+        fg_muted: "#9da9a0",
+        red: "#e67e80",
+        green: "#a7c080",
+        yellow: "#dbbc7f",
+        blue: "#7fbbb3",
+        purple: "#d699b6",
+        aqua: "#83c092",
+        orange: "#e69875",
+        gray: "#859289",
+    },
+    style: Style {
+        bar_radius: 0.0,
+        module_radius: 0.0,
+        button_radius: 0.0,
+        bar_bg: "#2b333980",
+        bar_border: "#4f585e",
+        bar_border_width: 0.0,
+        module_bg: "#2b333980",
+        module_border: "#4f585e",
+        module_border_width: 2.0,
+        grain_intensity: 0.05,
+        grain_scale: 1.5,
+        window_margin_top: 10,
+        window_margin_x: 10,
+        bar_height: 50.0,
+        module_height: 38.0,
+        font_size: 16.0,
+        bold: true,
+        colorful_modules: true,
+    },
+};
+
 pub struct ThemeState {
     id: u8, // 0=Ember, 1=Chroma
 }
 
 impl Service for ThemeState {
     fn new() -> Self {
-        Self { id: 1 }
+        let cfg = crate::config::get();
+        let id = id_from_str(&cfg.theme).unwrap_or(1);
+        Self { id }
     }
 
     fn interval() -> Duration {
@@ -159,7 +247,9 @@ impl ThemeState {
     pub fn current(&self) -> &'static Theme {
         match self.id {
             0 => &EMBER,
-            _ => &CHROMA,
+            1 => &CHROMA,
+            2 => &EVERFOREST_MIST,
+            _ => &EVERFOREST_BLOOM,
         }
     }
 
@@ -172,24 +262,64 @@ pub fn current() -> &'static Theme {
     ThemeState::read().current()
 }
 
+fn id_from_str(id: &str) -> Option<u8> {
+    match id.to_ascii_lowercase().as_str() {
+        "ember" | "gruvbox-ember" => Some(0),
+        "chroma" | "gruvbox-chroma" => Some(1),
+        "mist" | "everforest-mist" | "everforest" => Some(2),
+        "bloom" | "everforest-bloom" | "everforest-chroma" => Some(3),
+        _ => None,
+    }
+}
+
 pub fn set_by_id(id: &str) -> bool {
-    let next = match id.to_ascii_lowercase().as_str() {
-        "ember" | "gruvbox-ember" => 0,
-        "chroma" | "gruvbox-chroma" => 1,
-        _ => return false,
-    };
+    let Some(next) = id_from_str(id) else { return false };
     let mut state = ThemeState::write();
     state.set(next);
+    crate::config::set_theme(current_name(next));
     true
 }
 
 pub fn cycle() {
     let mut state = ThemeState::write();
-    state.id = if state.id == 0 { 1 } else { 0 };
+    state.id = (state.id + 1) % 4;
+    let name = current_name(state.id);
+    drop(state);
+    crate::config::set_theme(name);
 }
 
-pub fn all() -> [&'static Theme; 2] {
-    [&EMBER, &CHROMA]
+pub fn cycle_theme() {
+    let mut state = ThemeState::write();
+    state.id = match state.id {
+        0 => 2, // ember -> mist
+        1 => 3, // chroma -> bloom
+        2 => 0, // mist -> ember
+        _ => 1, // bloom -> chroma
+    };
+    let name = current_name(state.id);
+    drop(state);
+    crate::config::set_theme(name);
+}
+
+pub fn cycle_variant() {
+    let mut state = ThemeState::write();
+    state.id = match state.id {
+        0 => 1, // ember -> chroma
+        1 => 0, // chroma -> ember
+        2 => 3, // mist -> bloom
+        _ => 2, // bloom -> mist
+    };
+    let name = current_name(state.id);
+    drop(state);
+    crate::config::set_theme(name);
+}
+
+fn current_name(id: u8) -> &'static str {
+    match id { 0 => "ember", 1 => "chroma", 2 => "mist", _ => "bloom" }
+}
+
+pub fn all() -> [&'static Theme; 4] {
+    [&EMBER, &CHROMA, &EVERFOREST_MIST, &EVERFOREST_BLOOM]
 }
 
 pub fn color(hex: &str) -> Color {
