@@ -1,3 +1,6 @@
+use std::process::{Command, Stdio};
+use std::sync::{atomic::{AtomicBool, Ordering}, Mutex};
+
 use amane::*;
 
 use crate::theme::{self, GRAIN_SHADER, Theme};
@@ -262,13 +265,37 @@ fn battery_section(t: &Theme) -> Rectangle {
     )
 }
 
+static IDLE_INHIBITED: AtomicBool = AtomicBool::new(false);
+static INHIBIT_PID: Mutex<Option<u32>> = Mutex::new(None);
+
+fn toggle_idle_inhibit() {
+    let currently = IDLE_INHIBITED.load(Ordering::Relaxed);
+    if currently {
+        if let Ok(mut pid) = INHIBIT_PID.lock() {
+            if let Some(p) = pid.take() { let _ = Command::new("kill").arg(p.to_string()).status(); }
+        }
+        IDLE_INHIBITED.store(false, Ordering::Relaxed);
+    } else {
+        if let Ok(child) = Command::new("systemd-inhibit")
+            .args(["--what=idle:sleep", "--who=Amane", "--why=User idle inhibit", "sleep", "infinity"])
+            .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn() {
+            if let Ok(mut pid) = INHIBIT_PID.lock() { *pid = Some(child.id()); }
+            IDLE_INHIBITED.store(true, Ordering::Relaxed);
+        }
+    }
+}
+
 fn power_section(t: &Theme) -> Rectangle {
-    section(t, "Power", t.palette.red, 86.0,
-        Row::new(children![
-            small_btn("Reboot", 92.0, t, |_| amane::spawn("systemctl reboot")),
-            small_btn("Shutdown", 92.0, t, |_| amane::spawn("systemctl poweroff")),
-            small_btn("Lock", 92.0, t, |_| Lock::start()),
-        ]).gap(8.0).align(Center)
+    let inhibited = IDLE_INHIBITED.load(Ordering::Relaxed);
+    section(t, "Power", t.palette.red, 126.0,
+        Column::new(children![
+            Row::new(children![
+                small_btn("Reboot", 92.0, t, |_| amane::spawn("systemctl reboot")),
+                small_btn("Shutdown", 92.0, t, |_| amane::spawn("systemctl poweroff")),
+                small_btn("Lock", 92.0, t, |_| Lock::start()),
+            ]).gap(8.0).align(Center),
+            small_btn(if inhibited { "Idle Inhibit: ON" } else { "Idle Inhibit: OFF" }, 292.0, t, |_| toggle_idle_inhibit()),
+        ]).width(Parent).gap(8.0)
     )
 }
 

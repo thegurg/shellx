@@ -259,10 +259,9 @@ fn results(t: &Theme, query: &str, selected: usize, offset: usize) -> Rectangle 
     for (i, app) in apps.iter().enumerate().skip(start).take(end - start) {
         let is_sel = i == selected;
         let launched = app.clone();
-        let icon = Rectangle::new().width(28.0).height(28.0).radius(6.0);
         let icon = match app.icon_path() {
-            Some(path) => icon.fill(Image::contain(path)),
-            None => icon.fill(t.palette.bg1).align_child(Center, Center).child(
+            Some(path) => Rectangle::new().width(28.0).height(28.0).fill(Image::contain(path)),
+            None => Rectangle::new().width(28.0).height(28.0).radius(6.0).fill(t.palette.bg1).align_child(Center, Center).child(
                 Text::new("󰣆").size(t.style.font_size).color(theme::color(t.palette.fg_muted)),
             ),
         };

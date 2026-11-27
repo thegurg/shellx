@@ -18,6 +18,7 @@ pub struct Config {
     pub notifications_enabled: bool,
     pub monitor_enabled: bool,
     pub lock_enabled: bool,
+    pub osd_enabled: bool,
 }
 
 impl Default for Config {
@@ -30,6 +31,7 @@ impl Default for Config {
             notifications_enabled: true,
             monitor_enabled: true,
             lock_enabled: true,
+            osd_enabled: true,
         }
     }
 }
@@ -63,6 +65,7 @@ fn load_from_disk() -> Option<Config> {
             "notifications" | "notifications_enabled" => cfg.notifications_enabled = parse_bool(v, cfg.notifications_enabled),
             "monitor" | "monitor_enabled" => cfg.monitor_enabled = parse_bool(v, cfg.monitor_enabled),
             "lock" | "lock_enabled" => cfg.lock_enabled = parse_bool(v, cfg.lock_enabled),
+            "osd" | "osd_enabled" => cfg.osd_enabled = parse_bool(v, cfg.osd_enabled),
             _ => {}
         }
     }
@@ -99,6 +102,7 @@ pub fn save(cfg: &Config) -> std::io::Result<()> {
     out.push_str(&format!("notifications_enabled = {}\n", cfg.notifications_enabled));
     out.push_str(&format!("monitor_enabled = {}\n", cfg.monitor_enabled));
     out.push_str(&format!("lock_enabled = {}\n", cfg.lock_enabled));
+    out.push_str(&format!("osd_enabled = {}\n", cfg.osd_enabled));
     fs::write(p, out)
 }
 

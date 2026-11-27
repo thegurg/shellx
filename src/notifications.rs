@@ -221,32 +221,56 @@ fn center_card(t: &Theme, n: &Notification) -> Rectangle {
     let summary = n.summary().to_string();
     let body = n.body().to_string();
     let app = n.app_name().to_string();
+    let actions = n.actions().to_vec();
     let border = match n.urgency() {
         Urgency::Critical => t.palette.red,
         Urgency::Low => t.palette.bg2,
         _ => t.style.module_border,
     };
+    let mut col: Vec<Box<dyn Widget>> = vec![
+        Box::new(Row::new(children![
+            txt(if app.is_empty() { "app".into() } else { app.clone() }, t.style.font_size - 2.0, t.palette.fg_muted, false),
+            Rectangle::new().width(280.0).height(1.0).fill(Color::TRANSPARENT),
+            small_btn("×", 24.0, t, move |_| Notifications::dismiss(id)),
+        ]).width(Parent).gap(4.0).align(Center)),
+        Box::new(txt(if summary.is_empty() { "(no title)".into() } else { summary }, t.style.font_size - 1.0, t.palette.fg, true)),
+        Box::new(txt(truncate(&body, 140), t.style.font_size - 2.0, t.palette.fg_muted, false)),
+    ];
+    if !actions.is_empty() {
+        let mut btns: Vec<Box<dyn Widget>> = Vec::new();
+        for a in actions.iter().take(3) {
+            let key = a.key().to_string();
+            let label = a.label().to_string();
+            let id2 = id;
+            btns.push(Box::new(small_btn(&label, 90.0, t, move |_| Notifications::invoke(id2, &key))));
+        }
+        col.push(Box::new(Row::new(btns).width(Parent).gap(6.0).align(Center)));
+    }
     Rectangle::new()
-        .width(Parent).height(100.0)
+        .width(Parent).height(if actions.is_empty() { 100.0 } else { 132.0 })
         .radius(t.style.module_radius.max(8.0))
         .fill(t.palette.bg0)
         .border(t.style.module_border_width.max(1.0), border)
         .padding(Padding { top: 10.0, right: 10.0, bottom: 10.0, left: 10.0 })
-        .child(
-            Column::new(children![
-                Row::new(children![
-                    txt(if app.is_empty() { "app".into() } else { app.clone() }, t.style.font_size - 2.0, t.palette.fg_muted, false),
-                    Rectangle::new().width(280.0).height(1.0).fill(Color::TRANSPARENT),
-                    small_btn("×", 24.0, t, move |_| Notifications::dismiss(id)),
-                ]).width(Parent).gap(4.0).align(Center),
-                txt(if summary.is_empty() { "(no title)".into() } else { summary }, t.style.font_size - 1.0, t.palette.fg, true),
-                txt(truncate(&body, 140), t.style.font_size - 2.0, t.palette.fg_muted, false),
-            ]).width(Parent).gap(4.0)
-        )
+        .child(Column::new(col).width(Parent).gap(4.0))
+}
+
+fn strip_tags(s: &str) -> String {
+    let mut out = String::new();
+    let mut in_tag = false;
+    for c in s.chars() {
+        match c {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => out.push(c),
+            _ => {}
+        }
+    }
+    out.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&#39;", "'")
 }
 
 fn truncate(s: &str, max: usize) -> String {
-    let s = s.replace('\n', " ").trim().to_string();
+    let s = strip_tags(s).replace('\n', " ").trim().to_string();
     if s.chars().count() > max { format!("{}…", s.chars().take(max.saturating_sub(1)).collect::<String>()) } else { s }
 }
 

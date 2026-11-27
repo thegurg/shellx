@@ -35,6 +35,7 @@ fn panel(t: &Theme) -> Rectangle {
                 toggle_row(t, "Notifications", cfg.notifications_enabled, |v| update_cfg(|c| c.notifications_enabled = v)),
                 toggle_row(t, "Monitor", cfg.monitor_enabled, |v| update_cfg(|c| c.monitor_enabled = v)),
                 toggle_row(t, "Lock screen", cfg.lock_enabled, |v| update_cfg(|c| c.lock_enabled = v)),
+                toggle_row(t, "OSD", cfg.osd_enabled, |v| update_cfg(|c| c.osd_enabled = v)),
                 section(t, "Notifications"),
                 row_btn(t, "Popup timeout -1s", &format!("{}s", cfg.notification_timeout_secs), || update_cfg(|c| c.notification_timeout_secs = c.notification_timeout_secs.saturating_sub(1).max(1))),
                 row_btn(t, "Popup timeout +1s", &format!("{}s", cfg.notification_timeout_secs), || update_cfg(|c| c.notification_timeout_secs = (c.notification_timeout_secs + 1).min(15))),

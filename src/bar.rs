@@ -80,6 +80,7 @@ fn right(t: &Theme) -> Rectangle {
                 network_widget(t),
                 battery_widget(t),
                 media_indicator(t),
+                notif_widget(t),
                 control_center_button(t),
                 power_buttons(t),
             ])
@@ -239,6 +240,13 @@ fn media_indicator(t: &Theme) -> Rectangle {
     let icon = if p.playing() { "󰎈" } else { "󰏤" };
     let border = if t.style.colorful_modules { t.palette.purple } else { t.style.module_border };
     clickable_module(48.0, icon.to_string(), if p.playing() { t.palette.purple } else { t.palette.fg_muted }, border, t, |_| crate::control_center::toggle())
+}
+
+fn notif_widget(t: &Theme) -> Rectangle {
+    let count = Notifications::read().list().len();
+    let (label, fg) = if count > 0 { (format!("󰂚 {}", count.min(99)), t.palette.yellow) } else { ("󰂚".to_string(), t.palette.fg_muted) };
+    let border = if t.style.colorful_modules { t.palette.blue } else { t.style.module_border };
+    clickable_module(64.0, label, fg, border, t, |_| crate::notifications::toggle_center())
 }
 
 fn control_center_button(t: &Theme) -> Rectangle {

@@ -7,6 +7,7 @@ mod launcher;
 mod lock_screen;
 mod monitor;
 mod notifications;
+mod osd;
 mod rail;
 mod settings;
 mod theme;
@@ -37,6 +38,10 @@ fn main() {
 
     if cfg.rail_enabled {
         app = app.window(rail::view);
+    }
+
+    if cfg.osd_enabled {
+        app = app.window(osd::view);
     }
 
     if cfg.lock_enabled {
@@ -145,7 +150,7 @@ fn config_ipc(args: &[String]) -> String {
         }
         "get" => {
             let c = config::get();
-            format!("theme={} notification_timeout_secs={} bar={} rail={} notifications={} monitor={} lock={}", c.theme, c.notification_timeout_secs, c.bar_enabled, c.rail_enabled, c.notifications_enabled, c.monitor_enabled, c.lock_enabled)
+            format!("theme={} notification_timeout_secs={} bar={} rail={} notifications={} monitor={} lock={} osd={}", c.theme, c.notification_timeout_secs, c.bar_enabled, c.rail_enabled, c.notifications_enabled, c.monitor_enabled, c.lock_enabled, c.osd_enabled)
         }
         "settings" => { settings::open(); "ok".into() }
         _ => "unknown config command, use: get, reload, settings".into(),
